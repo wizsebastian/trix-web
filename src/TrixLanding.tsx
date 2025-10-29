@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Menu,
   X,
@@ -1827,10 +1828,19 @@ export default function TrixLanding() {
           </div>
 
           <div className="border-t border-slate-700 pt-6 sm:pt-8 text-center text-slate-400 text-xs sm:text-sm">
-            <p>
+            <p className="mb-4">
               &copy; 2025 TRIX - Inteligencia Espacial + IA. Todos los derechos
               reservados.
             </p>
+            
+            {/* Botón Admin */}
+            <Link 
+              to="/admin" 
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg hover:border-blue-400/50 hover:bg-slate-700/50 transition-all duration-300 text-slate-400 hover:text-blue-300 text-xs"
+            >
+              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
+              Admin Panel
+            </Link>
           </div>
         </div>
       </footer>
