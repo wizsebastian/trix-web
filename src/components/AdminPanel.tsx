@@ -274,7 +274,7 @@ export function AdminPanel() {
                           <Phone className="w-3 h-3" />
                           <span>{contact.codigoPais} {contact.telefono}</span>
                           {contact.tieneWhatsApp && (
-                            <MessageCircle className="w-3 h-3" title="WhatsApp disponible" />
+                            <MessageCircle className="w-3 h-3" />
                           )}
                         </div>
                       )}

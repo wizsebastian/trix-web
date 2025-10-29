@@ -45,7 +45,10 @@ export const sendThankYouEmail = async (contactData: ContactData) => {
     return { success: true, data: result, message: 'Email enviado correctamente' };
   } catch (error) {
     console.error('Error sending email:', error);
-    return { success: false, error: error.message || error };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
   }
 };
 
