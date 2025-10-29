@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const adminEmails = [
     'admin@trixgeo.com',
     'luis@trixgeo.com',
-    'geomatrix@gmail.com'
+    'geomatrix@gmail.com',
+    'wizsebastian@gmail.com'
   ];
 
   const login = async (email: string, password: string) => {

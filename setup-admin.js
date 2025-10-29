@@ -31,6 +31,11 @@ const adminUsers = [
     email: 'geomatrix@gmail.com',
     password: 'GeomatrixAdmin2025!',
     displayName: 'Geomatrix Admin'
+  },
+  {
+    email: 'wizsebastian@gmail.com',
+    password: 'WizAdmin2025!',
+    displayName: 'Sebastian Wizard'
   }
 ];
 
