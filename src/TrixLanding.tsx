@@ -27,278 +27,13 @@ import { PhoneInput } from './components/PhoneInput';
 import { sendContactToAPI } from './utils/apiClient';
 import { DemoForm, DemoFormData } from './components/DemoForm';
 import { sendDemoRequest } from './utils/demoApiClient';
+import { DominicanRepublicMap } from './components/DominicanRepublicMap';
 
 
-// Componente de Mapa GIS Interactivo - Opción 1: Capas Dinámicas + Opción 2: Heatmap
+// Componente de Mapa Real de República Dominicana
 const GISMapVisualization = () => {
-  const [layers, setLayers] = useState([
-    { id: 1, name: 'Topografía', active: true, color: 'rgb(59, 130, 246)', icon: '🏔️' },
-    { id: 2, name: 'Uso de Suelo', active: true, color: 'rgb(34, 197, 94)', icon: '🌱' },
-    { id: 3, name: 'Cobertura Vegetal', active: false, color: 'rgb(168, 85, 247)', icon: '🌲' },
-    { id: 4, name: 'Infraestructura', active: false, color: 'rgb(245, 158, 11)', icon: '🏗️' },
-    { id: 5, name: 'Riesgos', active: false, color: 'rgb(239, 68, 68)', icon: '⚠️' }
-  ]);
-
-  const [viewMode, setViewMode] = useState('layers'); // 'layers' o 'heatmap'
-
-  const toggleLayer = (layerId: number) => {
-    setLayers(layers.map(layer => 
-      layer.id === layerId ? {...layer, active: !layer.active} : layer
-    ));
-  };
-
-  const getLayerStyle = (layer: any) => {
-    if (!layer.active) return null;
-    if (layer.id === 1) return { d: "M 10 100 Q 100 50, 200 100 T 400 100", strokeWidth: 2 };
-    if (layer.id === 2) return { d: "M 20 150 Q 120 80, 220 150 T 420 150", strokeWidth: 2 };
-    if (layer.id === 3) return { d: "M 30 200 Q 130 120, 230 200 T 430 200", strokeWidth: 2 };
-    if (layer.id === 4) return { d: "M 50 120 L 150 120 L 150 220 L 50 220 Z", strokeWidth: 1.5 };
-    if (layer.id === 5) return { d: "M 250 80 Q 280 100, 250 120 Q 220 100, 250 80", strokeWidth: 2 };
-  };
-
-  const dataPoints = [
-    { x: 20, y: 30, intensity: 9, label: 'Zona A - Alta' },
-    { x: 60, y: 40, intensity: 6, label: 'Zona B - Media' },
-    { x: 80, y: 70, intensity: 7, label: 'Zona C - Media-Alta' },
-    { x: 45, y: 80, intensity: 8, label: 'Zona D - Alta' },
-  ];
-
-  const getHeatmapColor = (intensity: number) => {
-    if (intensity >= 8) return { fill: 'rgb(239, 68, 68)', label: 'Muy Alta' };
-    if (intensity >= 6) return { fill: 'rgb(245, 158, 11)', label: 'Alta' };
-    return { fill: 'rgb(34, 197, 94)', label: 'Media' };
-  };
-
-  return (
-    <div className="space-y-4">
-      {/* Selector de Modo */}
-      <div className="flex gap-2 bg-slate-800/50 border border-blue-400/30 rounded-lg p-2">
-        <button
-          onClick={() => setViewMode('layers')}
-          className={`flex-1 px-3 py-2 rounded transition text-sm font-semibold ${
-            viewMode === 'layers' 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-          }`}
-        >
-          📍 Capas Dinámicas
-        </button>
-        <button
-          onClick={() => setViewMode('heatmap')}
-          className={`flex-1 px-3 py-2 rounded transition text-sm font-semibold ${
-            viewMode === 'heatmap' 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-          }`}
-        >
-          🔥 Mapa de Calor
-        </button>
-      </div>
-
-      {/* Mapa Principal */}
-      <div className="relative w-full h-96 bg-slate-900/50 border border-blue-400/30 rounded-2xl overflow-hidden group">
-        {/* Fondo Grid GIS */}
-        <div className="absolute inset-0 gis-grid opacity-50"></div>
-
-        {/* Vista de Capas Dinámicas */}
-        {viewMode === 'layers' && (
-          <>
-            <svg className="absolute inset-0 w-full h-full" style={{opacity: 0.6}}>
-              <defs>
-                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.5"/>
-                  <stop offset="50%" stopColor="rgb(34, 197, 94)" stopOpacity="0.3"/>
-                  <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity="0.5"/>
-                </linearGradient>
-              </defs>
-              
-              {/* Renderizar capas activas */}
-              {layers.map((layer) => {
-                const style = getLayerStyle(layer);
-                return layer.active && style ? (
-                  <path 
-                    key={layer.id}
-                    d={style.d} 
-                    stroke={layer.color} 
-                    strokeWidth={style.strokeWidth} 
-                    fill="none"
-                    opacity="0.7"
-                    className="transition-all"
-                  />
-                ) : null;
-              })}
-
-              {/* Puntos de datos */}
-              {layers.find(l => l.id === 2 && l.active) && dataPoints.map((point, idx) => (
-                <g key={idx}>
-                  <circle cx={`${point.x}%`} cy={`${point.y}%`} r="5" fill="rgb(59, 130, 246)" opacity="0.7"/>
-                  <circle cx={`${point.x}%`} cy={`${point.y}%`} r="10" fill="none" stroke="rgb(34, 211, 238)" strokeWidth="2" className="animate-ping"/>
-                </g>
-              ))}
-            </svg>
-
-            {/* Marcador central */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 hidden group-hover:block">
-              <div className="w-4 h-4 bg-cyan-400 rounded-full animate-ping"></div>
-              <div className="w-4 h-4 bg-cyan-400 rounded-full absolute top-0 left-0"></div>
-            </div>
-          </>
-        )}
-
-        {/* Vista de Mapa de Calor */}
-        {viewMode === 'heatmap' && (
-          <svg className="absolute inset-0 w-full h-full">
-            {/* Grid de fondo suave */}
-            <defs>
-              <radialGradient id="heatmapGrad">
-                <stop offset="0%" stopColor="rgb(239, 68, 68)" stopOpacity="0.8"/>
-                <stop offset="50%" stopColor="rgb(245, 158, 11)" stopOpacity="0.5"/>
-                <stop offset="100%" stopColor="rgb(34, 197, 94)" stopOpacity="0.2"/>
-              </radialGradient>
-            </defs>
-
-            {/* Puntos del Heatmap con radios según intensidad */}
-            {dataPoints.map((point, idx) => {
-              const color = getHeatmapColor(point.intensity);
-              const radius = 50 + (point.intensity * 8);
-              
-              return (
-                <g key={idx}>
-                  {/* Anillos concéntricos */}
-                  <circle 
-                    cx={`${point.x}%`} 
-                    cy={`${point.y}%`} 
-                    r={radius * 1.5} 
-                    fill={color.fill} 
-                    opacity="0.15"
-                  />
-                  <circle 
-                    cx={`${point.x}%`} 
-                    cy={`${point.y}%`} 
-                    r={radius} 
-                    fill={color.fill} 
-                    opacity="0.4"
-                  />
-                  <circle 
-                    cx={`${point.x}%`} 
-                    cy={`${point.y}%`} 
-                    r={radius * 0.5} 
-                    fill={color.fill} 
-                    opacity="0.8"
-                  />
-                  
-                  {/* Punto central */}
-                  <circle 
-                    cx={`${point.x}%`} 
-                    cy={`${point.y}%`} 
-                    r="6" 
-                    fill={color.fill}
-                    className="animate-pulse"
-                  />
-                </g>
-              );
-            })}
-
-            {/* Efecto de texto en puntos (hover) */}
-            {dataPoints.map((point, idx) => (
-              <text 
-                key={`label-${idx}`}
-                x={`${point.x}%`} 
-                y={`${point.y + 10}%`} 
-                textAnchor="middle"
-                className="text-xs fill-white opacity-0 group-hover:opacity-100 transition-opacity"
-                fontSize="10"
-                fontWeight="bold"
-              >
-                {point.intensity}
-              </text>
-            ))}
-          </svg>
-        )}
-
-        {/* Overlay de efecto scaneo */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/5 to-transparent scan-line opacity-30"></div>
-
-        {/* Info de ubicación */}
-        <div className="absolute bottom-4 right-4 bg-slate-800/80 backdrop-blur border border-blue-400/50 rounded-lg p-3 z-10 text-xs">
-          <p className="text-slate-300">
-            <span className="text-blue-400 font-bold">GIS Analytics</span><br/>
-            {viewMode === 'layers' ? 'Capas Temáticas' : 'Densidad de Datos'}
-          </p>
-        </div>
-
-        {/* Leyenda dinámica */}
-        <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 sm:gap-4 text-xs z-10 max-w-xs">
-          {viewMode === 'layers' ? (
-            layers.filter(l => l.active).map(layer => (
-              <div key={layer.id} className="flex items-center gap-1.5 bg-slate-800/70 px-2 py-1 rounded">
-                <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: layer.color}}></div>
-                <span className="text-slate-300 text-xs truncate">{layer.name}</span>
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="flex items-center gap-1.5 bg-slate-800/70 px-2 py-1 rounded">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-                <span className="text-slate-300">Muy Alta</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-slate-800/70 px-2 py-1 rounded">
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
-                <span className="text-slate-300">Alta</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-slate-800/70 px-2 py-1 rounded">
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                <span className="text-slate-300">Media</span>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Selector de Capas */}
-      {viewMode === 'layers' && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {layers.map((layer) => (
-            <button
-              key={layer.id}
-              onClick={() => toggleLayer(layer.id)}
-              className={`p-2 sm:p-3 rounded-lg transition-all border-2 text-xs sm:text-sm font-semibold flex items-center gap-1.5 ${
-                layer.active 
-                  ? 'border-blue-400 bg-blue-500/20 text-blue-300' 
-                  : 'border-slate-600 bg-slate-800/50 text-slate-400 hover:border-blue-400/50'
-              }`}
-            >
-              <span className="text-base">{layer.icon}</span>
-              <span className="truncate">{layer.name}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Estadísticas del Heatmap */}
-      {viewMode === 'heatmap' && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {dataPoints.map((point, idx) => (
-            <div 
-              key={idx}
-              className="bg-slate-800/50 border border-blue-400/30 rounded-lg p-2 text-xs text-center hover:border-blue-400/60 transition"
-            >
-              <div className="font-bold text-blue-300">{point.label}</div>
-              <div className="flex items-center justify-center gap-1 mt-1">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{backgroundColor: getHeatmapColor(point.intensity).fill}}
-                ></div>
-                <span className="text-slate-300">{point.intensity}/10</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <DominicanRepublicMap />;
 };
-
 // Componente de AI + GIS Convergence
 const AIGISConvergence = () => {
   const [activeTab, setActiveTab] = useState("gis");
@@ -576,7 +311,7 @@ const GTSDemoView = ({ onBack, onSubmit }: { onBack: () => void; onSubmit: (form
               <div className="mb-4 flex justify-center animate-bounce">
                 <CheckCircle className="w-16 h-16 text-green-400" />
               </div>
-              <h3 className="text-2xl font-bold text-green-400 mb-2 animate-float">
+              <h3 className="text-2xl font-bold text-green-400 mb-2">
                 ¡Demo Solicitada!
               </h3>
               <p className="text-slate-300 mb-4">
@@ -1217,15 +952,10 @@ export default function TrixLanding() {
           </svg>
         </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
-            <div>
-              <div className="inline-block px-3 sm:px-4 py-2 bg-blue-500/20 border border-blue-400/50 rounded-full mb-4 sm:mb-6 animate-bounce">
-                <span className="text-xs sm:text-sm text-blue-300 flex items-center gap-2">
-                  <Map className="w-3 h-3 sm:w-4 sm:h-4" /> Geomática + IA
-                </span>
-              </div>
-
+        <div className="max-w-7xl mx-auto relative z-10 h-full">
+          <div className="grid md:grid-cols-2 gap-0 h-full min-h-[80vh]">
+            {/* Contenido izquierdo */}
+            <div className="flex flex-col justify-center p-8 lg:p-12">
               <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
                 Tecnología para la{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
@@ -1238,104 +968,92 @@ export default function TrixLanding() {
                 territoriales. Mapeo, análisis y predicción en tiempo real.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap">
+              <div className="mt-6">
                 <a
                   href="#gis"
-                  className="px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-lg font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition flex items-center justify-center gap-2 animate-float text-sm sm:text-base group"
+                  className="inline-flex items-center gap-2 text-blue-400 hover:text-cyan-300 transition-all duration-300 ease-out group text-base sm:text-lg font-medium"
                 >
-                  <span>GIS + IA</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </a>
-                <a
-                  href="#products"
-                  className="px-6 sm:px-8 py-2 sm:py-3 border border-green-400/50 rounded-lg font-semibold hover:bg-green-500/10 transition text-center text-sm sm:text-base"
-                >
-                  Productos
-                </a>
-                <a
-                  href="#services"
-                  className="px-6 sm:px-8 py-2 sm:py-3 border border-blue-400/50 rounded-lg font-semibold hover:bg-blue-500/10 transition text-center text-sm sm:text-base"
-                >
-                  Servicios
-                </a>
-                <a
-                  href="#contact"
-                  className="px-6 sm:px-8 py-2 sm:py-3 border border-cyan-400/50 rounded-lg font-semibold hover:bg-cyan-500/10 transition text-center text-sm sm:text-base"
-                >
-                  Contactanos
+                  <span>Conoce más</span>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 ease-out group-hover:translate-x-1" />
                 </a>
               </div>
             </div>
 
-            <div className="relative hidden md:block">
-              <GISMapVisualization />
+            {/* Mapa full width con cards flotantes */}
+            <div className="relative hidden md:block h-full">
+              <div className="absolute inset-0 h-full overflow-hidden">
+                <DominicanRepublicMap heroMode={true} />
+              </div>
+
+              {/* Card único con toda la información agrupada en la parte inferior */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute bottom-6 left-6 right-6 bg-slate-900/95 backdrop-blur-sm border border-blue-400/50 rounded-xl p-4 pointer-events-auto hover:scale-105 transition-all duration-300 shadow-2xl">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    {/* Ubicación en Tiempo Real */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-semibold text-green-300">En Tiempo Real</span>
+                      </div>
+                      <p className="text-xs text-slate-300">📍 República Dominicana</p>
+                      <p className="text-xs text-slate-500">Geolocalización activa</p>
+                    </div>
+
+                    {/* Cobertura Nacional */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm">🌍</span>
+                        <span className="text-xs font-semibold text-emerald-300">Cobertura Nacional</span>
+                      </div>
+                      <p className="text-xs text-slate-300">32 provincias</p>
+                      <p className="text-xs text-slate-500">Alcance completo</p>
+                    </div>
+
+                    {/* Respuesta Rápida */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm">⚡</span>
+                        <span className="text-xs font-semibold text-purple-300">Respuesta Rápida</span>
+                      </div>
+                      <p className="text-xs text-slate-300">&lt; 24 horas</p>
+                      <p className="text-xs text-slate-500">Análisis inicial</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </div>
             </div>
           </div>
 
-          {/* Mobile GIS Map - Smaller version */}
+          {/* Mobile GIS Map - Responsive version */}
           <div className="md:hidden mt-8 relative">
-            <div className="h-64 sm:h-80 bg-slate-900/50 border border-blue-400/30 rounded-xl overflow-hidden">
-              <svg className="w-full h-full" viewBox="0 0 400 300">
-                <defs>
-                  <linearGradient
-                    id="gradient-mobile"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor="rgb(59, 130, 246)"
-                      stopOpacity="0.3"
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="rgb(34, 197, 94)"
-                      stopOpacity="0.2"
-                    />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M 0 80 Q 100 50 200 80 T 400 80"
-                  stroke="url(#gradient-mobile)"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <path
-                  d="M 0 130 Q 100 100 200 130 T 400 130"
-                  stroke="url(#gradient-mobile)"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <path
-                  d="M 0 180 Q 100 150 200 180 T 400 180"
-                  stroke="url(#gradient-mobile)"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="5"
-                  fill="rgb(59, 130, 246)"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="200"
-                  cy="130"
-                  r="5"
-                  fill="rgb(34, 197, 94)"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="320"
-                  cy="180"
-                  r="5"
-                  fill="rgb(168, 85, 247)"
-                  opacity="0.6"
-                />
-              </svg>
+            <div className="h-80 overflow-hidden relative">
+              <DominicanRepublicMap heroMode={true} />
+              
+              {/* Card único móvil - toda la información agrupada en la parte inferior */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute bottom-4 left-4 right-4 bg-slate-900/95 backdrop-blur-sm border border-blue-400/50 rounded-xl p-3 pointer-events-auto shadow-xl">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs font-semibold text-green-300">República Dominicana</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="text-center">
+                        <span className="text-slate-300">🌍</span>
+                        <p className="text-slate-400">32 provincias</p>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-slate-300">⚡</span>
+                        <p className="text-slate-400">&lt; 24h</p>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-slate-300">📍</span>
+                        <p className="text-slate-400">En vivo</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
             </div>
           </div>
         </div>
@@ -1485,7 +1203,7 @@ export default function TrixLanding() {
                 key={idx}
                 className="bg-slate-900/50 border border-blue-400/30 rounded-lg sm:rounded-xl p-4 sm:p-8 hover:border-blue-400/60 transition hover:scale-105 duration-300"
               >
-                <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2 sm:mb-3 animate-float">
+                <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2 sm:mb-3">
                   {idx + 1}
                 </div>
                 <h3 className="text-base sm:text-xl font-bold mb-2 sm:mb-3">
@@ -1567,7 +1285,7 @@ export default function TrixLanding() {
             <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30 rounded-lg sm:rounded-2xl p-6 sm:p-8 hover:border-blue-400/60 transition animate-glow">
               <div className="space-y-4 sm:space-y-6">
                 <div className="text-center hover:scale-110 transition duration-300">
-                  <div className="text-3xl sm:text-4xl font-bold text-blue-400 mb-2 animate-float">
+                  <div className="text-3xl sm:text-4xl font-bold text-blue-400 mb-2">
                     20+
                   </div>
                   <div className="text-slate-300 text-sm sm:text-base">
@@ -1575,7 +1293,7 @@ export default function TrixLanding() {
                   </div>
                 </div>
                 <div className="text-center hover:scale-110 transition duration-300">
-                  <div className="text-3xl sm:text-4xl font-bold text-cyan-400 mb-2 animate-float">
+                  <div className="text-3xl sm:text-4xl font-bold text-cyan-400 mb-2">
                     100+
                   </div>
                   <div className="text-slate-300 text-sm sm:text-base">
@@ -1583,7 +1301,7 @@ export default function TrixLanding() {
                   </div>
                 </div>
                 <div className="text-center hover:scale-110 transition duration-300">
-                  <div className="text-3xl sm:text-4xl font-bold text-green-400 mb-2 animate-float">
+                  <div className="text-3xl sm:text-4xl font-bold text-green-400 mb-2">
                     ∞
                   </div>
                   <div className="text-slate-300 text-sm sm:text-base">
@@ -1600,7 +1318,7 @@ export default function TrixLanding() {
       <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-slate-800/50">
         <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-400/30 rounded-lg sm:rounded-2xl p-6 sm:p-12 text-center hover:border-blue-400/60 transition hover:shadow-lg hover:shadow-blue-500/20 duration-300">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 animate-bounce">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
               Nuestra Brújula
             </h2>
             <p className="text-base sm:text-xl text-slate-200 mb-6 sm:mb-8 leading-relaxed px-2">
@@ -1648,7 +1366,7 @@ export default function TrixLanding() {
           <div className="bg-slate-800/70 backdrop-blur border-2 border-blue-400/50 rounded-lg sm:rounded-2xl p-4 sm:p-8 shadow-2xl shadow-blue-500/20 hover:border-blue-400/80 transition-all duration-300 hover:scale-105">
             {!emailSent ? (
               <>
-                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2 animate-float">
+                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2">
                   <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 animate-bounce" />
                   Contactanos
                 </h3>
@@ -1733,7 +1451,7 @@ export default function TrixLanding() {
                 <div className="mb-3 sm:mb-4 flex justify-center animate-bounce">
                   <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-400" />
                 </div>
-                <h4 className="text-xl sm:text-2xl font-bold text-green-400 mb-2 animate-float">
+                <h4 className="text-xl sm:text-2xl font-bold text-green-400 mb-2">
                   ¡Mensaje Enviado!
                 </h4>
                 <p className="text-slate-300 text-sm sm:text-base">
@@ -1762,7 +1480,7 @@ export default function TrixLanding() {
                 TRIX
               </h3>
               <p className="text-slate-400 text-xs sm:text-sm">
-                Geomática + IA
+                Inteligencia Espacial
               </p>
             </div>
             <div>

@@ -187,7 +187,7 @@ export function DemoForm({ isOpen, onClose, onSubmit }: DemoFormProps) {
               <div className="mb-4 flex justify-center animate-bounce">
                 <CheckCircle className="w-16 h-16 text-green-400" />
               </div>
-              <h3 className="text-2xl font-bold text-green-400 mb-2 animate-float">
+              <h3 className="text-2xl font-bold text-green-400 mb-2">
                 ¡Demo Solicitada!
               </h3>
               <p className="text-slate-300 mb-4">
